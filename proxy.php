@@ -1,5 +1,4 @@
 <?php
-    $resource_folder = './assets/';
     $cache_folder = './.cache/';
     $resource = $_GET['resource'];
 
@@ -37,133 +36,6 @@
             error("Could not change back to base directory.", getcwd(), $base);
 
         return NULL;
-    }
-
-    function unzip_archive($zip_name) {
-        global $cache_folder, $resource_folder;
-        $base = getcwd();
-        if (!chdir($resource_folder))
-            error("Could not change into resource folder", $resource_folder);
-
-        $zip = zip_open($zip_name);
-        if (!is_resource($zip)) {
-            chdir($base);
-            error('ZIP archive cannot be read.', $zip, getcwd(), $zip_name);
-        }
-
-        if (!chdir($base) || !chdir($cache_folder)) {
-            zip_close($zip);
-            error('Could not change from resource folder to cache folder',
-                $base, $cache_folder);
-        }
-        
-        $hashes = array();
-
-        while ($zip_entry = zip_read($zip)) {
-            // read zip entry and store content in file
-            if (!zip_entry_open($zip, $zip_entry, "r")) {
-                chdir($base);
-                zip_entry_close($zip_entry);
-                zip_close($zip);
-                error('Error while unzipping file.', zip_entry_name($zip_entry));
-            }
-
-            $filename = basename(zip_entry_name($zip_entry));
-            $fileext = pathinfo($filename, PATHINFO_EXTENSION);
-            //error_log((string)$zip_name . ' ' . (string)$filename);
-
-            $fp = fopen($filename, 'w');
-            if ($fp === false) {
-                chdir($base);
-                zip_entry_close($zip_entry);
-                zip_close($zip);
-                error('Could not open file ', $filename);
-            }
-            while ($data = zip_entry_read($zip_entry)) {
-                if (fwrite($fp, $data) === false) {
-                    chdir($base);
-                    zip_entry_close($zip_entry);
-                    zip_close($zip);
-                    fclose($fp);
-                    error('Could not write data to file ', $filename);
-                }
-            }
-
-            if ($data === false) {
-                chdir($base);
-                zip_entry_close($zip_entry);
-                zip_close($zip);
-                fclose($fp);
-                error('Data could not be read from file', $filename);
-            }
-            if (fclose($fp) === false) {
-                chdir($base);
-                zip_entry_close($zip_entry);
-                zip_close($zip);
-                error('Could not close file', $filename);
-            }
-            error_log($filename . " - " . filesize($filename));
-            zip_entry_close($zip_entry);
-
-            // rename to hash filename
-            $hash_filename = md5_file($filename).'.'.$fileext;
-            if (file_exists($hash_filename)) {
-                unlink($filename);
-                continue;
-            }
-            if (!rename($filename, $hash_filename)) {
-                $action_pwd = getcwd();
-                chdir($base);
-                zip_close($zip);
-                error("Could not rename file.", $filename, $hash_filename, $action_pwd);
-            }
-
-            // if project.json, read project ID
-            if ($filename === 'project.json') {
-                $content = file_get_contents($hash_filename);
-                assert($content !== false);
-                $json = json_decode($content, true);
-                $projID = $json['info']['projectID'];
-                if (strlen($projID) === 0) {
-                    chdir($base);
-                    zip_close($zip);
-                    error("Project ID could not be read", $content, $json, $projID);
-                }
-
-                $hashes['proj_id'] = $projID;
-            }
-
-            $hashes[$hash_filename] = $filename;
-        }
-
-        // store hashes in info file
-        $proj_file = $hashes['proj_id'].'.json';
-        $fp = fopen($proj_file, 'w');
-        if ($fp === false) {
-            chdir($base);
-            zip_close($zip);
-            error("Could not write info file.", $proj_file);
-        }
-        unset($hashes['proj_id']);
-        fwrite($fp, json_encode($hashes) . "\n");
-        fclose($fp);
-        zip_close($zip);
-
-        chdir($base);
-    }
-
-    function unzip_all_archives() {
-        global $resource_folder;
-        $base = getcwd();
-        if (!chdir($resource_folder))
-            error("Could not change into resource folder", $resource_folder);
-        $filepaths = glob("*");
-        chdir($base);
-
-        foreach ($filepaths as $filename) {
-            unzip_archive($filename);
-            //echo "Unzipping $filename.\n";
-        }
     }
 
     function return_file($resource) {
@@ -213,42 +85,16 @@
     function return_project($project_id) {
         assert($project_id !== 0);
 
-        global $cache_folder;
-        $base = getcwd();
-        chdir($cache_folder);
-
-        $json = file_get_contents($project_id . ".json");
-        if ($json === false)
-            error("Could not read project file.", $project_id . '.json');
-
-        $json = json_decode($json, true);
-        $proj_file = "";
-        foreach ($json as $hash => $filename) {
-            if ($filename === 'project.json')
-                $proj_file = $hash;
-        }
-
-        if ($proj_file === '')
-            error("Project file did not provide reference to project.json");
-
-        chdir($base);
-        return_file($cache_folder . $proj_file);
+        return_file($cache_folder.$project_id.'.json');
         exit(0);
     }
 
 
     // Main routine
 
-    if (!file_exists($cache_folder)) {
-        if (!mkdir($cache_folder))
-            error("Could not create directory.", $cache_folder);
-    }
-    if (!file_exists($resource_folder)) {
-        if (!mkdir($resource_folder))
-            error("Could not create directory.", $resource_folder);
-    }
-
-    unzip_all_archives();
+    if (!file_exists($cache_folder))
+        error("Cache directory does not exist. Run unpack.py with "
+             ."project archives first.", $cache_folder);
 
     $parts = explode('/', $resource);
     assert($parts[0] === 'internalapi');
