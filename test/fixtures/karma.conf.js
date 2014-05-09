@@ -18,7 +18,8 @@ module.exports = function(config){
     ],
 
     preprocessors: {
-        '*.html': ['html2js']
+        '*.html': ['html2js'],
+        'js/**/*.js': ['coverage']
     },
 
     autoWatch : true,
@@ -27,9 +28,12 @@ module.exports = function(config){
 
     browsers : ['Chrome'],
 
+    reporters: ['progress', 'coverage'],
+
     plugins : [
       'karma-jasmine',
       'jasmine-jquery',
+      'karma-coverage',
       'karma-html2js-preprocessor',
       'karma-chrome-launcher',
       'karma-firefox-launcher'
