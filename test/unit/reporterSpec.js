@@ -114,11 +114,12 @@ describe('Reporter', function() {
                 'target': 'Stage', 'visible': true, 'x': 10, 'y': 10
             };
             var test_scene = $("<canvas></canvas>");
+            var source = test_scene.html();
 
             expect(source).not.toContain("userCount");
             test_reporter.attach(test_scene);
 
-            var source = test_scene.html();
+            source = test_scene.html();
             expect(source).toContain("userCount");
         });
     });
@@ -131,11 +132,12 @@ describe('Reporter', function() {
                 'listName': 'MockList', 'height': 420, 'width': 128, 'x': 42, 'y': 21, 'z': 42, 'visible': true
             }, 'Stage');
             var test_scene = $("<canvas></canvas>");
+            var source = test_scene.html();
 
             expect(source).not.toContain("MockList");
             test_lst.attach(test_scene);
 
-            var source = test_scene.html();
+            source = test_scene.html();
             expect(source).toContain("MockList");
         });
     });
