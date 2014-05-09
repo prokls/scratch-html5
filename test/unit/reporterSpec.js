@@ -6,6 +6,7 @@ describe('Reporter', function() {
     beforeEach(function() {
         reporter = Reporter;
         reporterValues = new ReporterValues();
+        runtime = new runtimeMock();
     });
 
     describe('Initialized variables', function() {
@@ -106,13 +107,13 @@ describe('Reporter', function() {
 
     });
 
-    describe('Attach reporter to scene', function () {
-        it('should contains Reporter after attaching Reporter to Scene', function () {
-            var test_reporter = {
+    describe('Attach reporter to scene', function() {
+        it('should contains Reporter after attaching Reporter to Scene', function() {
+            var test_reporter = new reporter({
                 'cmd': 'userCount', 'color': 1234567, 'isDiscrete': true,
-                'mode': 1, 'param': 'c', 'sliderMin': 2, 'sliderMax': 42,
+                'mode': 1, 'param': null, 'sliderMin': 2, 'sliderMax': 42,
                 'target': 'Stage', 'visible': true, 'x': 10, 'y': 10
-            };
+            });
             var test_scene = $("<canvas></canvas>");
             var source = test_scene.html();
 
@@ -125,8 +126,8 @@ describe('Reporter', function() {
     });
 
 
-    describe('Attach List to scene', function () {
-        it('should contain List after attaching List to Scene', function () {
+    describe('Attach List to scene', function() {
+        it('should contain List after attaching List to Scene', function() {
             var test_lst = new List({
                 'contents': ['<img src="file.gif">', 'Normal text'],
                 'listName': 'MockList', 'height': 420, 'width': 128, 'x': 42, 'y': 21, 'z': 42, 'visible': true
